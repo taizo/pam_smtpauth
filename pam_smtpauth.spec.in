@@ -58,7 +58,9 @@ export LDFLAGS
   --prefix=%{_prefix} \
   --libdir=%{_libdir} \
   --enable-debug=yes \
+%if "%{vendor_libdir}" != ""
   --includedir=%{vendor_includedir} \
+%endif
 %if %{with_smtps}
   --enable-ssl=yes \
   --with-krb5-dir=%{_prefix}/kerberos \
