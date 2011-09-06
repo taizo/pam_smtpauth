@@ -3,7 +3,7 @@ noinst_PROGRAMS = pam_smtpauth.so
 pam_smtpauth_so_SOURCES = pam_smtpauth.c smtpauth.c pam_smtpauth.h smtpauth.h socket.c base64.c global.h md5c.c md5.h
 pam_smtpauth_so_LDFLAGS = -shared
 
-CFLAGS = -Wall
+CFLAGS = -Wall -fPIC
 
 DEFS = @DEFS@
 
