@@ -1,0 +1,11 @@
+Source: libpam-smtpauth
+Build-Depends: debhelper (>= 5.0.22), binutils (>= 2.14.90.0.7), libpam0g-dev
+Section: admin
+Priority: extra
+Maintainer: Taizo ITO <taizo.ito@hde.co.jp>
+Standards-Version: 3.1.1.1
+
+Package: libpam-smtpauth
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Pluggable Authentication Module allowing SMTP authentication interface.

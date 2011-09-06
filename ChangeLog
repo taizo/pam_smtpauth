@@ -1,0 +1,178 @@
+2010-01-19  Taizo ITO <taizo@karesansui-project.info>
+
+  * config.h, configure, configure.ac, configure.in, debian/changelog: update
+  version.
+
+  * sample/pam_smtpauth.conf, src/pam_smtpauth.c: Added 'TryMethod' parameter
+  in configuration file.
+
+2009-08-07  Taizo ITO <taizo@karesansui-project.info>
+
+  * pam_smtpauth.spec.in: New upstream release.
+
+  * src/smtpauth.c: added newline macro
+
+  * src/pam_smtpauth.c: added debug message.
+
+  * debian/changelog, pam_smtpauth.5, pam_smtpauth.spec.in, src/pam_smtpauth.c,
+  src/pam_smtpauth.h, src/smtpauth.c, src/socket.c: implement debug level.
+
+2009-08-05  Taizo ITO <taizo@karesansui-project.info>
+
+  * Makefile.in, config.h, configure, configure.ac, configure.in,
+  pam_smtpauth.spec.in, src/Makefile.am, src/Makefile.in, src/pam_smtpauth.c,
+  src/pam_smtpauth.h, src/smtpauth.c, src/socket.c: added DebugLevel parameter.
+
+2009-07-24  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * pam_smtpauth.spec.in: the files in %files are owned by root.
+
+  * pam_smtpauth.spec.in: for vendor product.
+
+2009-07-23  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * pam_smtpauth.spec.in: added dist macro in spec.in.
+
+2009-07-10  Taizo ITO <taizo@karesansui-project.info>
+
+  * mkdeb.sh: delete script.
+
+  * sample/libpam-smtpauth.deb.diff: added debian deb build patch.
+
+  * debian/changelog, debian/control, debian/copyright, debian/dirs,
+  debian/files, debian/postrm, debian/rules: remove debian files.
+
+  * Makefile.am: delete debian-pkg files.
+
+  * debian/changelog: typo version number.
+
+  * Makefile.am: ignore warning.
+
+2009-07-10  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * Makefile.am, debian/changelog, debian/control, debian/copyright,
+  debian/dirs, debian/files, debian/postrm, debian/rules: added deb package
+  build environment.
+
+2009-07-09  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * AUTHORS, ChangeLog, src/base64.c: Modified some documents.
+
+2009-07-06  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * Makefile.in: added.
+
+  * Makefile.am, configure, configure.ac, configure.in, src/Makefile.am,
+  src/base64.c, src/global.h, src/md5.h, src/md5c.c, src/pam_smtpauth.c,
+  src/smtpauth.c, src/smtpauth.h, src/socket.c, tools/Makefile.am,
+  tools/authsend.c: create subdir
+
+  * Makefile.am, base64.c, smtpauth.c: Separate base64-related functions to new
+  file.
+
+2009-07-06  root <root@rhel5x86-64basic2.prd.local.hde.co.jp>
+
+  * smtpauth.c: fixed type cast
+
+2009-07-01  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * config.h, configure, configure.ac, configure.in: minor version up.
+
+  * pam_smtpauth.spec.in: building rpm requires pam-devel package.
+
+  * autogen.sh: Change autotools version checking routine.
+
+2009-06-23  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * pam_smtpauth.5, pam_smtpauth.c, smtpauth.c, smtpauth.h: append the
+  parameter for connection timeout.
+
+  * pam_smtpauth.c: fixed config parser.
+
+  * config.h, configure, tools/decode-md5.pl: version 0.9.3
+
+2009-06-22  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * configure.ac, configure.in, pam_smtpauth.spec.in: version 0.9.3
+
+  * pam_smtpauth.c, smtpauth.c, socket.c: added timed out routine.
+
+  * socket.c: add timed out routine.
+
+  * smtpauth.c: Remove comment.
+
+2009-06-19  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * smtpauth.c, tools/digest-md5.pl: Support digest-md5.
+
+  * smtpauth.c, socket.c, tools/decode-md5.pl, tools/digest-md5.pl: Supported
+  digest-md5.
+
+  * pam_smtpauth.c: allow the blocked user name specified by regular
+  expression.
+
+2009-06-18  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * smtpauth.c, socket.c: Support digest-md5.
+
+  * sample/pam_smtpauth.conf: Add comments about each parameter.
+
+  * sample/ca.crt: Add self-signed certificate.
+
+  * pam_smtpauth.5, pam_smtpauth.c: Added BlockedUserListFile parameter.
+
+2009-06-16  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * Makefile.am, socket.c: move from socket_io.c to socket.c.
+
+  * pam_smtpauth.c, pam_smtpauth.spec.in: get port number by using
+  getservbynam().
+
+  * sample/pam_smtpauth.conf, smtpauth.c: change sample configuration
+
+  * pam_smtpauth.c, smtpauth.c: removed debug messages.
+
+  * config.h, configure, pam_smtpauth.spec.in: minor versionup.
+
+  * configure.ac, configure.in: minor version-up.
+
+  * pam_smtpauth.5, pam_smtpauth.c, smtpauth.c, smtpauth.h: Supported SSL
+  connection. smtps
+
+  * Makefile.am, pam_smtpauth.c, smtpauth.c, socket_io.c: Enabled ssl
+  connection.
+
+2009-06-15  Taizo ITO <taizo.ito@hde.co.jp>
+
+  * smtpauth.c: Supported smtps.
+
+  * config.h, config.h.in, configure, configure.ac, configure.in,
+  pam_smtpauth.c, smtpauth.c, smtpauth.h: supported smtps.
+
+2009-06-15  root <root@rhel5x86-64basic2.prd.local.hde.co.jp>
+
+  * config.h, config.h.in, configure, configure.ac, configure.in: append
+  configure's debug option.
+
+  * pam_smtpauth.c, smtpauth.c: append DEBUG macro.
+
+  * pam_smtpauth.spec.in: Require pam > 0.70.
+
+  * pam_smtpauth.spec.in: do not replace configuration file in upgrade.
+
+2009-06-12  Taizo ITO <taizo@karesansui-project.info>
+
+  * smtpauth.c: fixed fatal error.
+
+  * pam_smtpauth.5, pam_smtpauth.c, pam_smtpauth.spec.in, smtpauth.c,
+  smtpauth.h: add license desriptions.
+
+  * pam_smtpauth.5: Modify manual
+
+  * Makefile.am, pam_smtpauth.5, pam_smtpauth.c, pam_smtpauth.spec.in: changed
+  the directory where configuration file is stored in.
+
+  * COPYING, INSTALL, Makefile.am, README, autogen.sh, config.h, config.h.in,
+  configure, configure.ac, configure.in, depcomp, global.h, install-sh, md5.h,
+  md5c.c, missing, pam_smtpauth.5, pam_smtpauth.c, pam_smtpauth.spec.in,
+  sample/pam.smtp, sample/pam_smtpauth.conf, smtpauth.c, smtpauth.h: import.

@@ -1,0 +1,9 @@
+libpam-smtpauth (0.9.8-1) unstable; urgency=low
+
+  * Rebuild package.
+
+ -- Taizo ITO <taizo.ito@hde.co.jp>  Tue, 19 Jul 2010 12:05:59 +0900
+
+Local variables:
+mode: debian-changelog
+End:

@@ -1,0 +1,36 @@
+pam_smtpauth
+============
+pam_smtpauth is a pluggable authentication module that can be used with
+Linux-PAM and SMTP Authentication.
+
+Install
+=======
+See INSTALL.
+
+License
+=======
+All parts of pam_smtpauth are GPL except MD5-related sources(md5.h,md5c.c,global.h).
+
+MD5 Message Digest is used in various protocols and programs
+related to computer security.  MD5 algorithm is defined in the
+RFC1321.
+
+Copyright by RSA Data Security
+------------------------------
+The most part of this source code is what I (Kondo) changed the
+"RSA Data Security, Inc. MD5 Message-Digest Algorithm" sample
+source code which is distributed within RFC1321 to work in the
+C++ code.  The sample source code is allowed to copy and use
+provided that it is identified as above.
+For mor information, you should refer to the comment in the
+md5c.cpp file.
+        Copyright (C) 1991-2, RSA Data Security, Inc.
+        Created 1991. All rights reserved.
+
+The implementation of CRAM-MD5 is a straight port of the "sample
+implementation" presented in RFC2104, which is based on RFC1321.
+
+
+Contact Info
+============
+http://sourceforge.jp/projects/pam-smtpauth/

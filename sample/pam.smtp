@@ -1,0 +1,4 @@
+#%PAM-1.0
+
+auth	sufficient /lib/security/pam_smtpauth.so
+account	sufficient /lib/security/pam_smtpauth.so 
