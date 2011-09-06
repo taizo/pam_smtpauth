@@ -1,0 +1,66 @@
+設定方法
+=========
+
+このドキュメントは、cyrus-saslによるSMTP認証を別のSMTPサーバーのSMTP認証に
+転送する設定方法を説明します。
+なお、以降はCentOS5.3を例に説明しますが、他のLinuxディストリビューションでも
+同様の設定を行うことで実現できます。
+
+cyrus-saslによるPAMを利用した認証は変更せずに、smtpで使用するPAMモジュールを
+pam_smtpauthに切り替えることでSMTP認証での認証を他のSMTPサーバーのSMTP認証に
+転送することを可能にします。
+
+設定手順
+---------
+1. まずpam_smtpauthのインストールを行います。
+
+2. 設定ファイルを編集します。
+
+   cyrus-saslの設定は変更する必要はありません。PAMのままにしておいてください。
+   PAMでない場合はPAMにしてください。 
+   CentOS5.3の場合は、/etc/sysconfig/saslauthd に MECH=pam を指定しsaslauthd
+   を再起動します。
+
+  2-1. /etc/pam.d/smtp
+
+   以下のように編集しcyrus-saslのPAM認証にpam_smtpauthを利用するように
+   切り替えます。
+
+   #%PAM-1.0
+   auth		sufficient /lib/security/pam_smtpauth.so
+   account	sufficient /lib/security/pam_smtpauth.so 
+
+   CentOS5.3の場合は、以下のコマンドで切り替えを行うのがよい
+
+   * pam_smtpauth有効
+   /usr/sbin/alternatives --install /etc/pam.d/smtp mta-pam /etc/pam_smtpauth/pam.smtp 90
+
+   * pam_smtpauth無効
+   /usr/sbin/alternatives --remove mta-pam /etc/pam_smtpauth/pam.smtp
+   echo "" | /usr/sbin/alternatives --config mta
+
+  2-2. /etc/pam_smtpauth.conf
+
+   pam_smtpauthの動作に関する設定を行います。
+
+    パラメータ名 	説明
+    SMTPServer_N 	認証を転送するSMTPサーバー名
+			Nは0、複数指定の場合は、1,2,3...
+
+    詳しくは man pam_smtpauth(5) で確認してください。
+
+
+その他の注意点・備考
+---------------------
+
+* pamモジュールのロードエラーで認証がうまくいかない場合は、SELinuxが有効に
+  なっていないか確認してください。
+
+* デバグログを表示させたい場合は、設定ファイルでDebugLevelを1以上に指定して
+  ください。
+  o syslog経由mailファシリティ、debugレベルでデバグ情報が出力されます。
+  o DebugLevel = 9 にするとパスワードが出力されますので注意してください。 
+
+* 対応メカニズム下記の順で試行します。
+  CRAM_MD5 -> LOGIN -> PLAIN -> DIGEST_MD5 
+

@@ -1,0 +1,129 @@
+.TH pam_smtpauth 5
+.\"  Copyright (C) 2009-2010 HDE, Inc.
+.\" Copying restrictions apply. See COPYING.
+.\" $Id: pam_smtpauth.5,v 1.2 2009/06/11 10:02:05 taizo Exp $
+.SH NAME
+pam_smtpauth \-  Pluggable authentication module for SMTP Authentication
+.SH DESCRIPTION
+The
+.B pam_smtpauth
+module is a Pluggable Authentication Module (PAM) which provides
+for authentication, authorization and password changing against
+.I
+SMTP Authentication
+servers. 
+.LP
+The present version of
+.B
+pam_smtpauth
+supports Linux.
+
+
+
+.SH CONFIGURATION
+.B
+pam_smtpauth
+stores its configuration in the
+.B
+pam_smtpauth.conf
+file.
+.LP
+Configuration file options consist of
+.B
+"key = value"
+format.
+The following options are supported by
+.B
+pam_smtpauth
+.B
+.TP
+.B Timeout
+Specifies the timeout seconds of socket I/O read/write to
+.I
+SMTP Authentication
+server. (default is
+.I 30
+seconds)
+.TP
+.B ConnectTimeout
+Specifies the timeout seconds of connection to
+.I
+SMTP Authentication
+server. (default is
+.I 10
+seconds)
+.TP
+.B SMTPServer_<n>
+Specifies the string of
+.I
+SMTP Authentication
+server.
+.I
+<n>
+is the number of server order.
+.br
+.B [example]
+.br
+SMTPServer_0 = mail.your.domain:25
+.br
+SMTPServer_1 = smtps:mail.your.domain:smtps
+.TP
+.B PasswordPrompt
+Specifies the string of the password prompt.
+.br
+.B [example]
+.br
+PasswordPrompt = Password: 
+.TP
+.B SSLCertificateFile
+Specifies the path of a PEM encoded certificate file.
+.br
+.B [example]
+.br
+SSLCertificateFile = /usr/share/ssl/certs/ca-bundle.crt
+.TP
+.B BlockedUserListFile
+Specifies the path of a file that the unacceptable users is written.
+.br
+.B [example]
+.br
+BlockedUserListFile = /etc/pam_smtpauth.blockedusers
+.TP
+.B DebugLevel
+Specifies the debugging output level.
+(default is
+.I 0
+:prints nothing
+)
+.br
+Higer numbers print more debug logging.
+The level number must be between 0 and 9.
+.br
+.B This parameter is only available if it was configured with --enable-debug=yes
+
+.B [example]
+.br
+DebugLevel = 1
+.TP
+.B TryMethod
+Specifies the trial method for multiple authentication servers.
+(default is
+.I first
+)
+.br
+.B first
+: when the first server is not available, it queries the next server.
+.br
+.B all
+: when the authentication is succeeded on any authentication server, it processes as authentication success.
+.br
+
+.B [example]
+.br
+TryMethod = first
+
+.SH FILES
+.TP
+/etc/pam_smtpauth.conf, /etc/pam.d/smtp
+.SH SEE ALSO
+.BR pam (8)

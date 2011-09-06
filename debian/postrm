@@ -1,0 +1,6 @@
+#!/bin/sh -e
+if [ "$0" = "purge" ]
+then
+    rm -f /etc/pam_smtpauth.conf
+fi
+#DEBHELPER#
