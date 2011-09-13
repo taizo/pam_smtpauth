@@ -505,6 +505,7 @@ smtp_auth(config_t *cfg) {
     if(cfg->timeout > 0) {
         set_timeout(cfg->timeout);
     }
+    usleep(2000000);
     rc = socket_read(smtp->sock, rbuf, sizeof(rbuf));
     if(cfg->timeout > 0) {
         set_timeout(0);
