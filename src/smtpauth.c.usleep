@@ -369,9 +369,7 @@ smtp_auth(config_t *cfg) {
     struct iovec iov[5];
     char *c;
     int rc;
-    int readBytes = 0;
     char rbuf[RESP_LEN];
-    char sockbuf[RESP_LEN];
     int auth = 0;
     int avail_auth_type = 0;
     char *tbuf;
@@ -467,13 +465,8 @@ smtp_auth(config_t *cfg) {
             }
         }
     }
-    s = socket(PF_INET, SOCK_STREAM, 0);
-
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(cfg->port);
     addr.sin_addr.s_addr = *((int *)he->h_addr_list[0]);
-    addr.sin_addr = *((struct in_addr *)he->h_addr);
-    memset(&(addr.sin_zero),'\0',8);
+    s = socket(PF_INET, SOCK_STREAM, 0);
 
     if(cfg->conn_timeout > 0) {
         set_timeout(cfg->conn_timeout);
@@ -512,15 +505,8 @@ smtp_auth(config_t *cfg) {
     if(cfg->timeout > 0) {
         set_timeout(cfg->timeout);
     }
-
-    //////////////////////////////////
-    //usleep(3000000);
-    memset(rbuf,0x00,sizeof(rbuf));
-    memset(rbuf,0x00,sizeof(sockbuf));
-    rc = socket_read(smtp->sock, sockbuf, sizeof(rbuf)-1);
-#ifdef DEBUG
-    log_debug(DEBUG_1, "smtp_auth: read count: %d", rc);
-#endif
+    usleep(2000000);
+    rc = socket_read(smtp->sock, rbuf, sizeof(rbuf));
     if(cfg->timeout > 0) {
         set_timeout(0);
     }
@@ -534,51 +520,11 @@ smtp_auth(config_t *cfg) {
         strcpy(smtp->error_message, msgbuf);
         goto bail;
     }
-    readBytes += rc;
-#ifdef DEBUG
-    log_debug(DEBUG_1, "smtp_auth: 1st 220 response total read count %d", readBytes);
-#endif
-    sockbuf[rc+1] = '\0';
-    rbuf[readBytes+1] = '\0';
-    strcat(rbuf, sockbuf);
+    rbuf[rc] = '\0';
     c = strpbrk(rbuf, SMTP_NEWLINE);
-    if(c == NULL) {
-#ifdef DEBUG
-        log_debug(DEBUG_1, "smtp_auth: 220 response is not terminated. try to read again. now: %s", rbuf);
-#endif
-        rc = socket_read(smtp->sock, sockbuf, sizeof(sockbuf)-1);
-#ifdef DEBUG
-        log_debug(DEBUG_1, "smtp_auth: read count: %d", rc);
-#endif
-        if(cfg->timeout > 0) {
-		set_timeout(0);
-        }
-        if(rc == -1) {
-#ifdef DEBUG
-            log_debug(DEBUG_1, "smtp_auth: read (banner): %m");
-#endif
-            smtp->error = 1;
-            strcpy(msgbuf, RESP_SYNCERROR);
-            smtp->error_message = malloc(strlen(msgbuf) + 1);
-            strcpy(smtp->error_message, msgbuf);
-            goto bail;
-        }
-        readBytes += rc;
-#ifdef DEBUG
-        log_debug(DEBUG_1, "smtp_auth: 220 response total read count %d", readBytes);
-#endif
-        sockbuf[rc+1] = '\0';
-        rbuf[readBytes+1] = '\0';
-        strcat(rbuf, sockbuf);
+    if(c != NULL) {
+        *c = '\0';
     }
-    c = strpbrk(rbuf, SMTP_NEWLINE);
-    if (c != NULL) {
-#ifdef DEBUG
-        log_debug(DEBUG_1, "smtp_auth: 220 response is terminated. total read count: %d, now: %s", readBytes, rbuf);
-#endif
-        rbuf[readBytes+1] = '\0';
-    }
-    //////////////////////////////////
 
     if(strncmp(rbuf, "220 ", sizeof("220 ")-1)) {
 #ifdef DEBUG
@@ -630,17 +576,14 @@ smtp_auth(config_t *cfg) {
     if(cfg->timeout > 0) {
         set_timeout(cfg->timeout);
     }
-
-    memset(rbuf,0x00,sizeof(rbuf));
     rc = socket_read(smtp->sock, rbuf, sizeof(rbuf));
     if(cfg->timeout > 0) {
         set_timeout(0);
     }
-#ifdef DEBUG
-    log_debug(DEBUG_1, "smtp_auth: read (response): %m");
-    log_debug(DEBUG_1, "smtp_auth: read (response): %s", rbuf);
-#endif
     if(rc == -1) {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "smtp_auth: read (response): %m");
+#endif
         smtp->error = 1;
         strcpy(msgbuf, RESP_IERROR);
         smtp->error_message = malloc(strlen(msgbuf) + 1);
