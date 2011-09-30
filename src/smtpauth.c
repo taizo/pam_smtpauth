@@ -66,6 +66,7 @@
 #define AUTH_LOGIN      1 << 1
 #define AUTH_CRAM_MD5   1 << 2
 #define AUTH_DIGEST_MD5 1 << 3
+#define NUM_AUTH        4        /* number of auth methods to try */
 
 #define DIGEST_MD5_REALM_LEN   256
 #define DIGEST_MD5_NONCE_LEN   64
@@ -388,6 +389,11 @@ smtp_auth(config_t *cfg) {
 #ifdef USE_SSL
     int use_ssl;
 #endif
+    // function pointer points to auth_xxxx();
+    int (*auth_method)(socket_t *, config_t *) = NULL;
+    // array that contains function pointer points to auth_xxxx();
+    int (*auth_methods[NUM_AUTH]) (socket_t *, config_t *) = { NULL };
+    int auth_methods_pos = 0;
 
     if(!cfg->password) {
         if(!global.password) {
@@ -688,19 +694,32 @@ smtp_auth(config_t *cfg) {
 #endif
 
     /* build the AUTH command */
-    if(avail_auth_type & AUTH_CRAM_MD5) {
-        auth = auth_cram_md5(smtp->sock,&global);
+    if (avail_auth_type & AUTH_CRAM_MD5) {
+        auth_methods[auth_methods_pos++] = auth_cram_md5;
+#ifdef DEBUG
+        log_debug(DEBUG_5, "set auth_methods[%d] = auth_cram_md5;", auth_methods_pos-1);
+#endif
     }
-    else if((avail_auth_type & AUTH_LOGIN) != 0) {
-        auth = auth_login(smtp->sock,&global);
+    if (avail_auth_type & AUTH_LOGIN) {
+        auth_methods[auth_methods_pos++] = auth_login;
+#ifdef DEBUG
+        log_debug(DEBUG_5, "set auth_methods[%d] = auth_login;", auth_methods_pos-1);
+#endif
     }
-    else if((avail_auth_type & AUTH_PLAIN) != 0) {
-        auth = auth_plain(smtp->sock,&global);
+    if (avail_auth_type & AUTH_PLAIN) {
+        auth_methods[auth_methods_pos++] = auth_plain;
+#ifdef DEBUG
+        log_debug(DEBUG_5, "set auth_methods[%d] = auth_plain;", auth_methods_pos-1);
+#endif
     }
-    else if((avail_auth_type & AUTH_DIGEST_MD5) != 0) {
-        auth = auth_digest_md5(smtp->sock,&global);
+    if (avail_auth_type & AUTH_DIGEST_MD5) {
+        auth_methods[auth_methods_pos++] = auth_digest_md5;
+#ifdef DEBUG
+        log_debug(DEBUG_5, "set auth_methods[%d] = auth_digest_md5;", auth_methods_pos-1);
+#endif
     }
-    else {
+
+    if (auth_methods_pos == 0) {
 #ifdef DEBUG
         log_debug(DEBUG_1, "smtp_auth: smtp authentication is not implemented: %s", rbuf);
 #endif
@@ -709,6 +728,28 @@ smtp_auth(config_t *cfg) {
         smtp->error_message = malloc(strlen(msgbuf) + 1);
         strcpy(smtp->error_message, msgbuf);
         goto bail;
+    }
+
+    for (auth_methods_pos = 0; auth_methods_pos < NUM_AUTH; auth_methods_pos++) {
+      if (auth_methods[auth_methods_pos] == NULL) {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth_methods[0] == NULL");
+#endif
+        break;
+      }
+      auth_method = auth_methods[auth_methods_pos];
+      // try to auth
+      auth = auth_method(smtp->sock, &global);
+      if (auth) {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth = %d", auth);
+#endif
+        break;
+      } else {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth failed. try next... = %d", auth);
+#endif
+      }
     }
 
 #ifdef DEBUG
