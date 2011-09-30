@@ -51,28 +51,26 @@ Linux-PAM and SMTP Authentication.
 %if "%{vendor_libdir}" != ""
 LIBS="-I%{vendor_includedir} -L%{vendor_libdir}"
 export LIBS
-LDFLAGS="-Wl,-rpath,%{vendor_libdir} -L%{vendor_libdir}"
+LDFLAGS="${LDFLAGS} -Wl,-rpath,%{vendor_libdir} -L%{vendor_libdir}"
 export LDFLAGS
 %endif
 %configure \
   --prefix=%{_prefix} \
   --libdir=%{_libdir} \
   --enable-debug=yes \
-%if "%{vendor_libdir}" != ""
   --includedir=%{vendor_includedir} \
-%endif
 %if %{with_smtps}
   --enable-ssl=yes \
   --with-krb5-dir=%{_prefix}/kerberos \
 %endif
 
 %if "%{vendor_libdir}" != ""
-CFLAGS="-I%{vendor_includedir} -Wl,-rpath,%{vendor_libdir} -L%{vendor_libdir}"
+CFLAGS="-fPIC -I%{vendor_includedir} -Wl,-rpath,%{vendor_libdir} -L%{vendor_libdir}"
+%else
+CFLAGS="-fPIC"
+%endif
 export CFLAGS
 make %{?_smp_mflags} CFLAGS="${CFLAGS}" || make CFLAGS="${CFLAGS}"
-%else
-make %{?_smp_mflags} || make
-%endif
 
 ## make check
 
@@ -109,6 +107,9 @@ true
 %{_mandir}/man5/pam_smtpauth.5.gz
 
 %changelog
+* Tue Apr 21 2010 Taizo ITO <taizo.ito@hde.co.jp> 0.9.9-1
+- Within NAT environment, a smtp greeting message cannot be received correctly.
+
 * Tue Apr 21 2010 Taizo ITO <taizo.ito@hde.co.jp> 0.9.8-2
 - Fixed libssl link option bug.
 
