@@ -107,6 +107,9 @@ true
 %{_mandir}/man5/pam_smtpauth.5.gz
 
 %changelog
+* Mon Oct 3 2011 Taizo ITO <taizo.ito@hde.co.jp> 1.0.0-1
+- Added new configuration parameter - TryMechs.
+
 * Tue Apr 21 2010 Taizo ITO <taizo.ito@hde.co.jp> 0.9.9-1
 - Within NAT environment, a smtp greeting message cannot be received correctly.
 

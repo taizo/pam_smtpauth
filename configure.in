@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([pam_smtpauth], [0.9.8], [taizo.ito@hde.co.jp])
+AC_INIT([pam_smtpauth], [1.0.0], [taizo.ito@hde.co.jp])
 AC_CONFIG_SRCDIR([src/pam_smtpauth.c])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
