@@ -361,6 +361,7 @@ digest_md5(char *response, unsigned char *text, unsigned int text_len, const cha
 smtp_t *
 smtp_auth(config_t *cfg) {
 
+    int cnt;
     int s;
     struct sockaddr_in addr;
     struct hostent *he;
@@ -394,6 +395,23 @@ smtp_auth(config_t *cfg) {
     // array that contains function pointer points to auth_xxxx();
     int (*auth_methods[NUM_AUTH]) (socket_t *, config_t *) = { NULL };
     int auth_methods_pos = 0;
+
+    char method_order[NUM_AUTH][16];
+    char *order_buf;
+
+    strcpy(method_order[0], strtok(global.trymechs," ,"));
+#ifdef DEBUG
+    log_debug(DEBUG_1, "smtp_auth: method_order[0] = %s",method_order[0]);
+#endif
+    for(cnt=1; ; cnt++) {
+        if(NULL == (order_buf = strtok(NULL, " ,"))) {
+            break;
+        }
+        strcpy(method_order[cnt], order_buf);
+#ifdef DEBUG
+        log_debug(DEBUG_1, "smtp_auth: method_order[%d] = %s",cnt,method_order[cnt]);
+#endif
+    }
 
     if(!cfg->password) {
         if(!global.password) {
@@ -694,29 +712,35 @@ smtp_auth(config_t *cfg) {
 #endif
 
     /* build the AUTH command */
-    if (avail_auth_type & AUTH_CRAM_MD5) {
-        auth_methods[auth_methods_pos++] = auth_cram_md5;
+    for(cnt=0; cnt<NUM_AUTH; cnt++) {
+        if (method_order[cnt] == NULL) {
+            continue;
+        }
+
+        if (strcmp(method_order[cnt],"CRAM-MD5")==0 && (avail_auth_type & AUTH_CRAM_MD5)) {
+            auth_methods[auth_methods_pos++] = auth_cram_md5;
 #ifdef DEBUG
-        log_debug(DEBUG_5, "set auth_methods[%d] = auth_cram_md5;", auth_methods_pos-1);
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_cram_md5;", auth_methods_pos-1);
 #endif
-    }
-    if (avail_auth_type & AUTH_LOGIN) {
-        auth_methods[auth_methods_pos++] = auth_login;
+        }
+        if (strcmp(method_order[cnt],"LOGIN")==0 && (avail_auth_type & AUTH_LOGIN)) {
+            auth_methods[auth_methods_pos++] = auth_login;
 #ifdef DEBUG
-        log_debug(DEBUG_5, "set auth_methods[%d] = auth_login;", auth_methods_pos-1);
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_login;", auth_methods_pos-1);
 #endif
-    }
-    if (avail_auth_type & AUTH_PLAIN) {
-        auth_methods[auth_methods_pos++] = auth_plain;
+        }
+        if (strcmp(method_order[cnt],"PLAIN")==0 && (avail_auth_type & AUTH_PLAIN)) {
+            auth_methods[auth_methods_pos++] = auth_plain;
 #ifdef DEBUG
-        log_debug(DEBUG_5, "set auth_methods[%d] = auth_plain;", auth_methods_pos-1);
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_plain;", auth_methods_pos-1);
 #endif
-    }
-    if (avail_auth_type & AUTH_DIGEST_MD5) {
-        auth_methods[auth_methods_pos++] = auth_digest_md5;
+        }
+        if (strcmp(method_order[cnt],"DIGEST-MD5")==0 && (avail_auth_type & AUTH_DIGEST_MD5)) {
+            auth_methods[auth_methods_pos++] = auth_digest_md5;
 #ifdef DEBUG
-        log_debug(DEBUG_5, "set auth_methods[%d] = auth_digest_md5;", auth_methods_pos-1);
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_digest_md5;", auth_methods_pos-1);
 #endif
+        }
     }
 
     if (auth_methods_pos == 0) {
