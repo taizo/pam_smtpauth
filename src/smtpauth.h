@@ -44,6 +44,7 @@ struct config {
     unsigned int use_sslv3:1;
     unsigned int use_tlsv1:1;
 #endif
+    char *trymechs;
 };
 typedef struct config config_t;
 

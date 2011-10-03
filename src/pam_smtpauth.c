@@ -45,6 +45,7 @@
 #define NETWORK_CONN_TIMEOUT 10
 #define NETWORK_IO_TIMEOUT   30
 #define DEFAULT_TRYMETHOD    "first"
+#define DEFAULT_TRYMECHS     "CRAM-MD5,LOGIN,PLAIN,DIGEST-MD5"
 
 #define SA_NO_SERVER_LEFT 127
 #define SA_SERVER_CONNECT_FAILURE 64
@@ -299,6 +300,9 @@ pam_sm_authenticate( pam_handle_t *pamh, int flags, int argc, const char **argv)
     }
     password = NULL;
     global.password = NULL;
+
+    free(global.username);
+    free(global.password);
     return PAM_AUTH_ERR;
 }
 
@@ -306,11 +310,13 @@ pam_sm_authenticate( pam_handle_t *pamh, int flags, int argc, const char **argv)
 int
 smtp_connect(int num) {
 
+    int cnt;
     char param[16];
     char tnum[16];
     char *smtp_server;
     char *buffer;
     struct servent *se;
+    char *trymechs;
 
 #ifdef DEBUG
     log_debug(DEBUG_5, "smtp_connect num=%d", num);
@@ -358,17 +364,33 @@ smtp_connect(int num) {
         global.port =  htons(se->s_port);
     }
 
+    trymechs = get_config(configfile, "TryMechs");
+    if(trymechs == NULL) {
+        trymechs = DEFAULT_TRYMECHS;
+    }
+    for(cnt=0; cnt<strlen(trymechs); cnt++) {
+      if (trymechs[cnt] >= 'a' && trymechs[cnt] <= 'z') {
+        trymechs[cnt] = (char)((int)trymechs[cnt] + (int)'A' - (int)'a');
+      }
+    }
+    if(!global.trymechs) {
+        global.trymechs = (char *)malloc(64);
+    }
+    strncpy(global.trymechs,trymechs, 64);
+
 #ifdef DEBUG
     log_debug(DEBUG_5, "global.host=%s", global.host);
     log_debug(DEBUG_5, "global.port=%d", global.port);
     log_debug(DEBUG_5, "global.username=%s", global.username);
     log_debug(DEBUG_9, "global.password=%s", global.password);
+    log_debug(DEBUG_5, "global.trymechs=%s", global.trymechs);
 #endif
 
     smtp = (smtp_t *)smtp_auth(&global);
 #ifdef DEBUG
     log_debug(DEBUG_5, "smtp->error=%d", smtp->error);
 #endif
+    free(global.trymechs);
 
     //sleep(3);
 

@@ -121,6 +121,17 @@ Specifies the trial method for multiple authentication servers.
 .B [example]
 .br
 TryMethod = first
+.TP
+.B TryMechs
+Specifies the order of authentication mechanisms.
+(default is
+.I CRAM-MD5,LOGIN,PLAIN,DIGEST-MD5
+)
+.br
+
+.B [example]
+.br
+TryMechs = CRAM-MD5,PLAIN
 
 .SH FILES
 .TP
