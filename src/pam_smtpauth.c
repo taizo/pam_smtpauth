@@ -345,6 +345,9 @@ smtp_connect(int num) {
         global.use_sslv3 = 1;
         global.use_tlsv1 = 1;
         global.certfile = get_config(configfile, "SSLCertificateFile");
+        if(global.certfile == NULL) {
+            global.certfile = "/usr/share/certs/pam_smtpauth.crt";
+        }
 #else
         syslog(LOG_INFO, "[pam_smtpauth] smtps is not implemented.");
 #endif
