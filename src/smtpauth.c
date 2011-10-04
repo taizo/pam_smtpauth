@@ -1410,7 +1410,7 @@ auth_digest_md5(socket_t *sock, config_t *cfg) {
 #ifdef USE_SSL
 SSL_CTX *SSLContext = 0;
 
-#ifdef VERYIFY_CERT
+#ifdef VERIFY_CERT
 static int
 verify_cert(SSL *ssl) {
 
@@ -1430,6 +1430,9 @@ verify_cert(SSL *ssl) {
 
     err = SSL_get_verify_result(ssl);
     if(err == X509_V_OK) {
+        return 0;
+    }
+    if(err == X509_V_ERR_CERT_HAS_EXPIRED) {
         return 0;
     }
 
@@ -1493,7 +1496,7 @@ init_ssl(config_t *conf) {
             return -1;
         }
 #ifdef DEBUG
-        log_debug(DEBUG_1, "init_ssl: Warning: SSLCertificateFile doesn't exist, can't verify server certificates.");
+        log_debug(DEBUG_1, "init_ssl: Warning: SSLCertificateFile %s doesn't exist, can't verify server certificates.",conf->certfile);
 #endif
     } else if(!SSL_CTX_load_verify_locations(SSLContext, conf->certfile, NULL)) {
 #ifdef DEBUG
@@ -1543,7 +1546,7 @@ start_tls(smtp_t *smtp, config_t *cfg) {
     }
 #ifdef VERIFY_CERT
     /* verify the server certificate */
-    if(verify_cert(smtp->sock->ssl)) {
+    if(verify_cert(smtp->sock->ssl) != 0) {
         return 1;
     }
 #endif
