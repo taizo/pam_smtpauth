@@ -47,12 +47,13 @@
 #include "md5.h"
 #endif
 
-#define SMTP_EHLO_CMD "EHLO "	/* ESMTP ehlo command */
-#define SMTP_AUTH_CMD "AUTH "	/* ESMTP auth command */
-#define SMTP_QUIT_CMD "QUIT"	/* ESMTP quit command */
-#define SMTP_NEWLINE  "\r\n"	/* ESMTP newline */
+#define SMTP_EHLO_CMD	  "EHLO "	/* ESMTP ehlo command */
+#define SMTP_AUTH_CMD	  "AUTH "	/* ESMTP auth command */
+#define SMTP_QUIT_CMD	  "QUIT"	/* ESMTP quit command */
+#define SMTP_STARTTLS_CMD "STARTTLS"	/* ESMTP starttls command */
+#define SMTP_NEWLINE	  "\r\n"	/* ESMTP newline */
 
-#define RESP_LEN 1000
+#define RESP_LEN	 1000
 #define RESP_IERROR	 "internal error"
 #define RESP_UNAVAILABLE "remote authentication server is currently unavailable"
 #define RESP_UNEXPECTED	 "unexpected response from remote authentication server"
@@ -66,6 +67,7 @@
 #define AUTH_LOGIN      1 << 1
 #define AUTH_CRAM_MD5   1 << 2
 #define AUTH_DIGEST_MD5 1 << 3
+#define NUM_AUTH        4        /* number of auth methods to try */
 
 #define DIGEST_MD5_REALM_LEN   256
 #define DIGEST_MD5_NONCE_LEN   64
@@ -360,6 +362,7 @@ digest_md5(char *response, unsigned char *text, unsigned int text_len, const cha
 smtp_t *
 smtp_auth(config_t *cfg) {
 
+    int cnt;
     int s;
     struct sockaddr_in addr;
     struct hostent *he;
@@ -386,6 +389,28 @@ smtp_auth(config_t *cfg) {
 #ifdef USE_SSL
     int use_ssl;
 #endif
+    // function pointer points to auth_xxxx();
+    int (*auth_method)(socket_t *, config_t *) = NULL;
+    // array that contains function pointer points to auth_xxxx();
+    int (*auth_methods[NUM_AUTH]) (socket_t *, config_t *) = { NULL };
+    int auth_methods_pos = 0;
+
+    char method_order[NUM_AUTH][16];
+    char *order_buf;
+
+    strcpy(method_order[0], strtok(global.trymechs," ,"));
+#ifdef DEBUG
+    log_debug(DEBUG_1, "smtp_auth: method_order[0] = %s",method_order[0]);
+#endif
+    for(cnt=1; ; cnt++) {
+        if(NULL == (order_buf = strtok(NULL, " ,"))) {
+            break;
+        }
+        strcpy(method_order[cnt], order_buf);
+#ifdef DEBUG
+        log_debug(DEBUG_1, "smtp_auth: method_order[%d] = %s",cnt,method_order[cnt]);
+#endif
+    }
 
     if(!cfg->password) {
         if(!global.password) {
@@ -465,8 +490,13 @@ smtp_auth(config_t *cfg) {
             }
         }
     }
-    addr.sin_addr.s_addr = *((int *)he->h_addr_list[0]);
     s = socket(PF_INET, SOCK_STREAM, 0);
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(cfg->port);
+    addr.sin_addr.s_addr = *((int *)he->h_addr_list[0]);
+    addr.sin_addr = *((struct in_addr *)he->h_addr);
+    memset(&(addr.sin_zero),'\0',8);
 
     if(cfg->conn_timeout > 0) {
         set_timeout(cfg->conn_timeout);
@@ -576,14 +606,17 @@ smtp_auth(config_t *cfg) {
     if(cfg->timeout > 0) {
         set_timeout(cfg->timeout);
     }
+
+    memset(rbuf,0x00,sizeof(rbuf));
     rc = socket_read(smtp->sock, rbuf, sizeof(rbuf));
     if(cfg->timeout > 0) {
         set_timeout(0);
     }
-    if(rc == -1) {
 #ifdef DEBUG
-        log_debug(DEBUG_1, "smtp_auth: read (response): %m");
+    log_debug(DEBUG_1, "smtp_auth: read (response): %m");
+    log_debug(DEBUG_1, "smtp_auth: read (response): %s", rbuf);
 #endif
+    if(rc == -1) {
         smtp->error = 1;
         strcpy(msgbuf, RESP_IERROR);
         smtp->error_message = malloc(strlen(msgbuf) + 1);
@@ -591,7 +624,7 @@ smtp_auth(config_t *cfg) {
         goto bail;
     }
 
-    if((tbuf = strstr(rbuf, "250-STARTTLS"))) {
+    if((tbuf = strstr(rbuf, "250-STARTTLS")) == NULL) {
 #ifdef DEBUG
         log_debug(DEBUG_1, "smtp_auth: STARTTLS not supported.");
 #endif
@@ -631,19 +664,38 @@ smtp_auth(config_t *cfg) {
 #endif
 
     /* build the AUTH command */
-    if(avail_auth_type & AUTH_CRAM_MD5) {
-        auth = auth_cram_md5(smtp->sock,&global);
+    for(cnt=0; cnt<NUM_AUTH; cnt++) {
+        if (method_order[cnt] == NULL) {
+            continue;
+        }
+
+        if (strcmp(method_order[cnt],"CRAM-MD5")==0 && (avail_auth_type & AUTH_CRAM_MD5)) {
+            auth_methods[auth_methods_pos++] = auth_cram_md5;
+#ifdef DEBUG
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_cram_md5;", auth_methods_pos-1);
+#endif
+        }
+        if (strcmp(method_order[cnt],"LOGIN")==0 && (avail_auth_type & AUTH_LOGIN)) {
+            auth_methods[auth_methods_pos++] = auth_login;
+#ifdef DEBUG
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_login;", auth_methods_pos-1);
+#endif
+        }
+        if (strcmp(method_order[cnt],"PLAIN")==0 && (avail_auth_type & AUTH_PLAIN)) {
+            auth_methods[auth_methods_pos++] = auth_plain;
+#ifdef DEBUG
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_plain;", auth_methods_pos-1);
+#endif
+        }
+        if (strcmp(method_order[cnt],"DIGEST-MD5")==0 && (avail_auth_type & AUTH_DIGEST_MD5)) {
+            auth_methods[auth_methods_pos++] = auth_digest_md5;
+#ifdef DEBUG
+            log_debug(DEBUG_5, "set auth_methods[%d] = auth_digest_md5;", auth_methods_pos-1);
+#endif
+        }
     }
-    else if((avail_auth_type & AUTH_LOGIN) != 0) {
-        auth = auth_login(smtp->sock,&global);
-    }
-    else if((avail_auth_type & AUTH_PLAIN) != 0) {
-        auth = auth_plain(smtp->sock,&global);
-    }
-    else if((avail_auth_type & AUTH_DIGEST_MD5) != 0) {
-        auth = auth_digest_md5(smtp->sock,&global);
-    }
-    else {
+
+    if (auth_methods_pos == 0) {
 #ifdef DEBUG
         log_debug(DEBUG_1, "smtp_auth: smtp authentication is not implemented: %s", rbuf);
 #endif
@@ -652,6 +704,28 @@ smtp_auth(config_t *cfg) {
         smtp->error_message = malloc(strlen(msgbuf) + 1);
         strcpy(smtp->error_message, msgbuf);
         goto bail;
+    }
+
+    for (auth_methods_pos = 0; auth_methods_pos < NUM_AUTH; auth_methods_pos++) {
+      if (auth_methods[auth_methods_pos] == NULL) {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth_methods[0] == NULL");
+#endif
+        break;
+      }
+      auth_method = auth_methods[auth_methods_pos];
+      // try to auth
+      auth = auth_method(smtp->sock, &global);
+      if (auth) {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth = %d", auth);
+#endif
+        break;
+      } else {
+#ifdef DEBUG
+        log_debug(DEBUG_1, "auth failed. try next... = %d", auth);
+#endif
+      }
     }
 
 #ifdef DEBUG
@@ -1288,7 +1362,7 @@ auth_digest_md5(socket_t *sock, config_t *cfg) {
 #ifdef USE_SSL
 SSL_CTX *SSLContext = 0;
 
-#ifdef VERYIFY_CERT
+#ifdef VERIFY_CERT
 static int
 verify_cert(SSL *ssl) {
 
@@ -1308,6 +1382,9 @@ verify_cert(SSL *ssl) {
 
     err = SSL_get_verify_result(ssl);
     if(err == X509_V_OK) {
+        return 0;
+    }
+    if(err == X509_V_ERR_CERT_HAS_EXPIRED) {
         return 0;
     }
 
@@ -1371,7 +1448,7 @@ init_ssl(config_t *conf) {
             return -1;
         }
 #ifdef DEBUG
-        log_debug(DEBUG_1, "init_ssl: Warning: SSLCertificateFile doesn't exist, can't verify server certificates.");
+        log_debug(DEBUG_1, "init_ssl: Warning: SSLCertificateFile %s doesn't exist, can't verify server certificates.",conf->certfile);
 #endif
     } else if(!SSL_CTX_load_verify_locations(SSLContext, conf->certfile, NULL)) {
 #ifdef DEBUG
@@ -1421,7 +1498,7 @@ start_tls(smtp_t *smtp, config_t *cfg) {
     }
 #ifdef VERIFY_CERT
     /* verify the server certificate */
-    if(verify_cert(smtp->sock->ssl)) {
+    if(verify_cert(smtp->sock->ssl) != 0) {
         return 1;
     }
 #endif
