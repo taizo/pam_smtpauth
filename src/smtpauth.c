@@ -47,12 +47,13 @@
 #include "md5.h"
 #endif
 
-#define SMTP_EHLO_CMD "EHLO "	/* ESMTP ehlo command */
-#define SMTP_AUTH_CMD "AUTH "	/* ESMTP auth command */
-#define SMTP_QUIT_CMD "QUIT"	/* ESMTP quit command */
-#define SMTP_NEWLINE  "\r\n"	/* ESMTP newline */
+#define SMTP_EHLO_CMD	  "EHLO "	/* ESMTP ehlo command */
+#define SMTP_AUTH_CMD	  "AUTH "	/* ESMTP auth command */
+#define SMTP_QUIT_CMD	  "QUIT"	/* ESMTP quit command */
+#define SMTP_STARTTLS_CMD "STARTTLS"	/* ESMTP starttls command */
+#define SMTP_NEWLINE	  "\r\n"	/* ESMTP newline */
 
-#define RESP_LEN 1000
+#define RESP_LEN	 1000
 #define RESP_IERROR	 "internal error"
 #define RESP_UNAVAILABLE "remote authentication server is currently unavailable"
 #define RESP_UNEXPECTED	 "unexpected response from remote authentication server"
@@ -672,7 +673,7 @@ smtp_auth(config_t *cfg) {
         goto bail;
     }
 
-    if((tbuf = strstr(rbuf, "250-STARTTLS"))) {
+    if((tbuf = strstr(rbuf, "250-STARTTLS")) == NULL) {
 #ifdef DEBUG
         log_debug(DEBUG_1, "smtp_auth: STARTTLS not supported.");
 #endif

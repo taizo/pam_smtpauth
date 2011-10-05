@@ -344,10 +344,6 @@ smtp_connect(int num) {
         global.use_sslv2 = 1;
         global.use_sslv3 = 1;
         global.use_tlsv1 = 1;
-        global.certfile = get_config(configfile, "SSLCertificateFile");
-        if(global.certfile == NULL) {
-            global.certfile = "/usr/share/certs/pam_smtpauth.crt";
-        }
 #else
         syslog(LOG_INFO, "[pam_smtpauth] smtps is not implemented.");
 #endif
@@ -365,6 +361,11 @@ smtp_connect(int num) {
         global.port = atoi(buffer);
     } else {
         global.port =  htons(se->s_port);
+    }
+
+    global.certfile = get_config(configfile, "SSLCertificateFile");
+    if(global.certfile == NULL) {
+        global.certfile = "/usr/share/certs/pam_smtpauth.crt";
     }
 
     trymechs = get_config(configfile, "TryMechs");
@@ -387,6 +388,7 @@ smtp_connect(int num) {
     log_debug(DEBUG_5, "global.username=%s", global.username);
     log_debug(DEBUG_9, "global.password=%s", global.password);
     log_debug(DEBUG_5, "global.trymechs=%s", global.trymechs);
+    log_debug(DEBUG_5, "global.certfile=%s", global.certfile);
 #endif
 
     smtp = (smtp_t *)smtp_auth(&global);
